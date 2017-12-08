@@ -6,10 +6,11 @@ import turtle
 
 turtle.fd(0)
 turtle.speed(0)
+turtle.setup(width = 800, height = 800, startx = 0, starty = 0)
 turtle.bgcolor("black")
 turtle.ht()
 turtle.setundobuffer(1)
-turtle.tracer(1)
+turtle.tracer(2)
 
 class Sprite(turtle.Turtle):
     def __init__(self, spriteshape, color, startx, starty):
@@ -64,6 +65,27 @@ class Enemy(Sprite):
         Sprite.__init__(self, spriteshape, color, startx, starty)
         self.speed = 6
         self.setheading(random.randint(0,360))
+class Ally(Sprite):
+    def __init__(self, spriteshape, color, startx, starty):
+        Sprite.__init__(self, spriteshape, color, startx, starty)
+        self.speed = 8
+        self.setheading(random.randint(0,360))
+
+    def move(self):
+        self.fd(self.speed)
+
+        if self.xcor() > 290:
+            self.setx(290)
+            self.lt(60)
+        if self.xcor() < -290:
+            self.setx(-290)
+            self.lt(60)
+        if self.ycor() > 290:
+            self.sety(290)
+            self.lt(60)
+        if self.ycor() < -290:
+            self.sety(-290)
+            self.lt(60)
 class Missile(Sprite):
     def __init__(self, spriteshape, color, startx, starty):
         Sprite.__init__(self, spriteshape, color, startx, starty)
@@ -105,6 +127,12 @@ class Game():
             self.pen.rt(90)
         self.pen.penup()
         self.pen.ht()
+    def show_status(self):
+        self.pen.undo()
+        msg = "Score = %s" %(self.score)
+        self.pen.penup()
+        self.pen.goto(-300,310)
+        self.pen.write(msg, font=("Comic Sans MS", 16, "normal"))
 
 game = Game()
 
@@ -114,6 +142,13 @@ game.draw_border()
 
 player = Player("triangle", "white", 0, 0)
 enemy = Enemy("circle", "red", -100,0)
+enemies = []
+for i in range(3):
+    enemies.append(Enemy("circle", "red", -100,0))
+ally = Ally("square", "blue", 0,0)
+allies = []
+for i in range(3):
+    allies.append(Ally("square", "blue", 100,0))
 missile = Missile("triangle", "yellow", 0,0)
 
 turtle.listen()
@@ -124,10 +159,28 @@ turtle.onkey(player.decelerate, "Down")
 turtle.onkey(missile.fire, "space")
 while True:
     player.move()
-    enemy.move()
     missile.move()
-
-    if player.is_collision(enemy):
-        x = random.randint(-250, 250)
-        y = random.randint(-250, 250)
-        enemy.goto(x, y)
+    for enemy in enemies:
+        enemy.move()
+        if missile.is_collision(enemy):
+            x = random.randint(-250, 250)
+            y = random.randint(-250, 250)
+            enemy.goto(x, y)
+            missile.status = "ready"
+            game.score += 100
+            game.show_status()
+        if player.is_collision(enemy):
+            x = random.randint(-250, 250)
+            y = random.randint(-250, 250)
+            enemy.goto(x, y)
+            game.score -= 100
+            game.show_status()
+    for ally in allies:
+        ally.move()
+        if missile.is_collision(ally):
+            x = random.randint(-250, 250)
+            y = random.randint(-250, 250)
+            ally.goto(x, y)
+            missile.status = "ready"
+            game.score -= 50
+            game.show_status()
